@@ -16,20 +16,16 @@ public class ActorInitalizeSystem : ComponentSystem
         public EntityArray Entity;
         public ComponentArray<Transform> Transform;
         [ReadOnly] public SharedComponentDataArray<Actor> Actor;
+        public ExcludeComponent<Frozen> Frozen;
     }
 
     [Inject] private Data data;
 
     protected override void OnUpdate()
     {
-        for (var i = 0; i < data.Length; i++)
-        {
-            var entity = data.Entity[i];
-            var transform = data.Transform[i];
-            var actor = data.Actor[i];
-
-            if (EntityManager.HasComponent(entity, typeof(Frozen)))
-                return;
+            var entity = data.Entity[0];
+            var transform = data.Transform[0];
+            var actor = data.Actor[0];
 
 
             EntityManager.AddComponentData(entity, new Frozen());
@@ -38,6 +34,5 @@ public class ActorInitalizeSystem : ComponentSystem
             ActorUtilities.UpdateAnimator(actor, transform);
             ActorUtilities.UpdateCollider(actor, transform, 0);
             ActorUtilities.UpdatePhysics(actor, transform);
-        }
     }
 }

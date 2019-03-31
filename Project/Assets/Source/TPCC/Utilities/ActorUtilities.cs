@@ -73,6 +73,8 @@ public class ActorUtilities
         {
             if (actor.collision.type == ActorCollisionType.Capsule)
                 collider = transform.gameObject.AddComponent<CapsuleCollider>();
+            else if (actor.collision.type == ActorCollisionType.Box)
+                collider = transform.gameObject.AddComponent<BoxCollider>();
             collider.material = actor.collision.physicsMaterial;
         }
 
@@ -82,6 +84,12 @@ public class ActorUtilities
             ((CapsuleCollider)collider).center = actorCollisionBounds.center;
             ((CapsuleCollider)collider).radius = actorCollisionBounds.size.x;
             ((CapsuleCollider)collider).height = actorCollisionBounds.size.y;
+        }
+
+        else if (actor.collision.type == ActorCollisionType.Box)
+        {
+            ((BoxCollider)collider).center = actorCollisionBounds.center;
+            ((BoxCollider)collider).size = actorCollisionBounds.size;
         }
     }
 
@@ -94,4 +102,29 @@ public class ActorUtilities
 
         rigidbody.constraints = actor.collision.constraints;
     }
-}
+    public static Transform GetSocket(Transform owner, string name)
+    {
+        Transform[] children = owner.GetComponentsInChildren<Transform>();
+        foreach (var child in children)
+        {
+            if (child.name == name)
+            {
+                return child;
+            }
+        }
+
+        return null;
+    }
+
+        public static bool IsSocketEmpty(Transform owner, string name)
+        {
+            var a = owner.GetComponentInChildren<Animator>();
+
+            var socket = GetSocket(owner, name);
+
+            if (socket != null)
+                return socket.childCount <= 0;
+
+            return false;
+        }
+    }

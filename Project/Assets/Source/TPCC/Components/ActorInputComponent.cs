@@ -15,6 +15,7 @@ public struct ActorInput : IComponentData
     public byte strafe;
     public byte crouch;
     public byte walk;
+    public byte action;
     public byte applyRootMotion;
 
     public byte crouchPreviousFrame;
