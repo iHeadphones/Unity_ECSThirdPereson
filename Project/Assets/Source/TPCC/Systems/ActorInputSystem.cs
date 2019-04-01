@@ -10,43 +10,22 @@ using UnityEngine.Experimental.PlayerLoop;
 
 public class ActorInputSystem : ComponentSystem
 {
-    public struct Data
-    {
-        public readonly int Length;
-        public GameObjectArray GameObject;
-        public EntityArray Entity;
-        public ComponentDataArray<ActorInput> ActorInput;
-    }
-
-    [Inject] private Data data;
-    private ActorInput actorInput;
-
     protected override void OnUpdate()
     {
-        for (var i = 0; i < data.Length; i++)
+        Entities.WithAll<ActorInput>().ForEach((Entity entity, ref ActorInput actorInput) =>
         {
-            var entity = data.Entity[i];
-            actorInput = data.ActorInput[i];
-
-
-            actorInput.crouchPreviousFrame = actorInput.crouch;
-            actorInput.actionToDoIndex = 0;
-
-            UpdateAsAI(entity);
-            UpdateAsPlayer(entity);
-
-            //Write Entity Input
-            data.ActorInput[i] = actorInput;
-        }
+            UpdateAsAI(entity, ref actorInput);
+            UpdateAsPlayer(entity, ref actorInput);
+        });
     }
 
-    private void UpdateAsAI(Entity entity)
+    private void UpdateAsAI(Entity entity, ref ActorInput actorInput)
     {
         if (EntityManager.HasComponent(entity, typeof(ActorPlayer)))
             return;
     }
 
-    private void UpdateAsPlayer(Entity entity)
+    private void UpdateAsPlayer(Entity entity, ref ActorInput actorInput)
     {
         if (!EntityManager.HasComponent(entity, typeof(ActorPlayer)))
             return;
@@ -58,14 +37,16 @@ public class ActorInputSystem : ComponentSystem
             actorInput.movement.x = GInput.GetAxisRaw(GAxis.LEFTHORIZONTAL);
             actorInput.movement.z = GInput.GetAxisRaw(GAxis.LEFTVERTICAL);
 
+            //Reset
+            actorInput.actionToDoIndex = 0;
+            actorInput.action = 0;
+
             //BUTTONS
             if (GInput.GetButtonDown(GButton.BOTTOM)) actorInput.actionToDoIndex = 1;
             if (GInput.GetButtonDown(GButton.L3)) actorInput.crouch = (byte)(actorInput.crouch == 1 ? 0 : 1);
             actorInput.action = (byte)(GInput.GetButtonDown(GButton.LEFT) ? 1 : 0);
             actorInput.sprint = (byte)(GInput.GetButton(GButton.TOP) ? 1 : 0);
             actorInput.strafe = (byte)(GInput.GetButton(GButton.L2) ? 1 : 0);
-
-            //actorInput.walk = 1;
         }
 
         //Convert Actor Movement to Camera

@@ -10,18 +10,6 @@ using UnityEngine;
 
 public class ActorCharacterMovementSystem : ComponentSystem
 {
-
-    public struct Data
-    {
-        public readonly int Length;
-        public EntityArray Entity;
-        public ComponentArray<Transform> Transform;
-        public ComponentDataArray<ActorInput> ActorInput;
-        [ReadOnly] public SharedComponentDataArray<Actor> Actor;
-        [ReadOnly] public SharedComponentDataArray<ActorCharacter> ActorCharacter;
-    }
-
-    [Inject] private Data data;
     private Dictionary<int, float> jumpIntervals = new Dictionary<int, float>();
     private Dictionary<int, bool> isJumpings = new Dictionary<int, bool>();
     private float dt;
@@ -35,16 +23,13 @@ public class ActorCharacterMovementSystem : ComponentSystem
     {
         dt = Time.deltaTime;
 
-        for (var i = 0; i < data.Length; i++)
+        Entities.WithAll<Transform, Actor, ActorInput, ActorCharacter>().ForEach((Entity entity, Transform transform, ref ActorInput actorInput) =>
         {
             // Data
-            var transform = data.Transform[i];
-            var entity = data.Entity[i];
-            var actorInput = data.ActorInput[i];
-            var actor = data.Actor[i];
-            var actorCharacter = data.ActorCharacter[i];
+            var actor = EntityManager.GetSharedComponentData<Actor>(entity);
+            var actorCharacter = EntityManager.GetSharedComponentData<ActorCharacter>(entity);
 
-            //TO FIX LATER WHEN ECS MATURES
+            //MonoBehaviours
             var animationEventManager = transform.GetComponentInChildren<AnimationEventManager>();
             var animator = transform.GetComponentInChildren<Animator>();
             var rigidbody = transform.GetComponent<Rigidbody>();
@@ -58,10 +43,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             OnFallMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnJumpMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnGroundMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
-
-            //Write back updated input
-            data.ActorInput[i] = actorInput;
-        }
+        });
     }
 
     private void GetMovement(ref ActorInput actorInput)

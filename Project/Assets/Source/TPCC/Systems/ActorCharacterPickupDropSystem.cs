@@ -10,68 +10,47 @@ using System.Collections.Generic;
 
 public class ActorCharacterPickupDropSystem : ComponentSystem
 {
-    private ComponentGroup inventoryGroup;
-    private ComponentGroup itemGroup;
-
-    protected override void OnCreateManager()
-    {
-        inventoryGroup = GetComponentGroup(typeof(ActorInventory), typeof(Transform), typeof(ActorInput));
-        itemGroup = GetComponentGroup(typeof(ActorItem), typeof(Transform));
-    }
-
     protected override void OnUpdate()
     {
-        //Get Inventories Data
-        var inventoryTransforms = inventoryGroup.ToComponentArray<Transform>();
-        var inventories = inventoryGroup.ToComponentDataArray<ActorInventory>(Allocator.TempJob);
-        var actorInputs = inventoryGroup.ToComponentDataArray<ActorInput>(Allocator.TempJob);
-
-        //Get Items Data
-        var itemEntities = itemGroup.ToEntityArray(Allocator.TempJob);
-        var itemTransforms = itemGroup.ToComponentArray<Transform>();
-        var items = itemGroup.GetSharedComponentDataArray<ActorItem>();
-
-        for (int i = 0; i < inventories.Length; i++)
+        Entities.WithAll<Transform, ActorInventory, ActorInput>().ForEach((Entity inventoryEntity, Transform inventoryTransform, ref ActorInventory actorInventory, ref ActorInput actorInput) =>
         {
-            if (actorInputs[i].action == 0 || actorInputs[i].actionIndex != 0)
-                continue;
-
-            for (int j = 0; j < items.Length; j++)
+            if (actorInput.action == 1 && actorInput.actionIndex == 0)
             {
-                //Check if were in distance and not already picked up
-                if (Vector3.Distance(inventoryTransforms[i].position, itemTransforms[j].position) <= 0.5f && !EntityManager.HasComponent(itemEntities[j], typeof(Parent)))
+                Entities.WithAll<Transform, ActorItem>().ForEach((Entity itemEntity, Transform itemTransform) =>
                 {
-                    //Create a list of sockets from item data
-                    var scokets = new List<string>();
-                    foreach (var k in (items[j].equippedSocket + ',' + items[j].idleSocket).Split(','))
-                        scokets.Add(k);
+                    //Get Item shared component
+                    var item = EntityManager.GetSharedComponentData<ActorItem>(itemEntity);
 
-                    //Get Target Socket | Get Target Socket Index 
-                    var targetSocket = ActorUtilities.GetFirstEmptyTransform(inventoryTransforms[i], scokets.ToArray());
-                    int targetSocketIndex = scokets.IndexOf(targetSocket.name);
-
-                    if (targetSocket != null)
+                    //Check if were in distance and not already picked up
+                    if (Vector3.Distance(inventoryTransform.position, itemTransform.position) <= 1f && !EntityManager.HasComponent(itemEntity, typeof(Parent)))
                     {
-                        //Add Parent tag to item
-                        PostUpdateCommands.AddComponent(itemEntities[j], new Parent());
+                        //Create a list of sockets from item data
+                        var scokets = new List<string>();
+                        foreach (var i in (item.equippedSocket + ',' + item.idleSocket).Split(','))
+                            scokets.Add(i);
 
-                        //Disable Physics | Collision
-                        itemTransforms[j].GetComponent<Rigidbody>().useGravity = false;
-                        itemTransforms[j].GetComponent<Rigidbody>().isKinematic = true;
-                        itemTransforms[j].GetComponent<Collider>().enabled = false;
+                        //Get Target Socket | Get Target Socket Index 
+                        var targetSocket = ActorUtilities.GetFirstEmptyTransform(inventoryTransform, scokets.ToArray());
+                        int targetSocketIndex = scokets.IndexOf(targetSocket.name);
 
-                        //Set Parent | local position | local euelr angle
-                        itemTransforms[j].parent = targetSocket;
-                        itemTransforms[j].localPosition = items[j].socketOffsetPositions[targetSocketIndex];
-                        itemTransforms[j].localEulerAngles = items[j].socketEulerAngles[targetSocketIndex];
+                        if (targetSocket != null)
+                        {
+                            //Add Parent tag to item
+                            PostUpdateCommands.AddComponent(itemEntity, new Parent());
+
+                            //Disable Physics | Collision
+                            itemTransform.GetComponent<Rigidbody>().useGravity = false;
+                            itemTransform.GetComponent<Rigidbody>().isKinematic = true;
+                            itemTransform.GetComponent<Collider>().enabled = false;
+
+                            //Set Parent | local position | local euelr angle
+                            itemTransform.parent = targetSocket;
+                            itemTransform.localPosition = item.socketOffsetPositions[targetSocketIndex];
+                            itemTransform.localEulerAngles = item.socketEulerAngles[targetSocketIndex];
+                        }
                     }
-                }
+                });
             }
-        }
-
-        //Cleanup
-        inventories.Dispose();
-        actorInputs.Dispose();
-        itemEntities.Dispose();
+        });
     }
 }

@@ -6,30 +6,32 @@ using Unity.Transforms;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
+using System.Collections.Generic;
 
 public class SpawnPointSystem : ComponentSystem
 {
-    public struct Data
-    {
-        public readonly int Length;
-        public EntityArray Entity;
-        public ComponentArray<Transform> Transform;
-        [ReadOnly] public SharedComponentDataArray<SpawnPoint> SpawnPoint;
-         public ExcludeComponent<Frozen> Frozen;
-    }
 
-    [Inject] Data data;
+    private List<SpawnPoint> spawnPontsToUse = new List<SpawnPoint>();
+    private List<float3> spawnPontsToUsePositions = new List<float3>();
 
     protected override void OnUpdate()
     {
-            //Read Data
-            var entity = data.Entity[0];
-            var transform = data.Transform[0];
-            var spawnPoint = data.SpawnPoint[0];
-            
-            ActorUtilities.Spawn(EntityManager, transform.position, spawnPoint.sourceGameObject, spawnPoint.spawnAsPlayer);
+        //Que spawns
+        Entities.WithAll<Transform, SpawnPoint>().WithNone<Frozen>().ForEach((Entity entity, Transform transform) =>
+        {
+            var spawnPoint = EntityManager.GetSharedComponentData<SpawnPoint>(entity);
             PostUpdateCommands.AddComponent(entity, new Frozen());
-            
-    
+            spawnPontsToUse.Add(spawnPoint);
+            spawnPontsToUsePositions.Add(transform.position);
+        });
+
+        //Spawn outside of entity loop
+        {
+            for (int i = 0; i < spawnPontsToUse.Count; i++)
+                ActorUtilities.Spawn(EntityManager,spawnPontsToUsePositions[i], spawnPontsToUse[i].sourceGameObject, spawnPontsToUse[i].spawnAsPlayer);
+
+            spawnPontsToUse.Clear();
+            spawnPontsToUsePositions.Clear();
+        }
     }
 }

@@ -10,28 +10,6 @@ using System.Collections.Generic;
 
 public class GrassUpdateSystem : ComponentSystem
 {
-    //Blueprint of what grass data is made out
-    public struct GrassData
-    {
-        public readonly int Length;
-        [ReadOnly] public SharedComponentDataArray<Grass> Grass;
-        public ComponentArray<MeshRenderer> MeshRenderer;
-        public ComponentArray<Transform> Transform;
-        public EntityArray Entity;
-    }
-
-    //BLueprint of entites with grass collisions
-    public struct GrassCollisionData
-    {
-        public readonly int Length;
-        [ReadOnly] public SharedComponentDataArray<GrassCollision> GrassCollision;
-        public ComponentArray<Transform> Transform;
-    }
-
-    //Inject to get actors from blueprints
-    [Inject] private GrassData grassData;
-    [Inject] private GrassCollisionData grassCollisionData;
-
     //Helpful Variables
     private Dictionary<int, float> grassIntervals = new Dictionary<int, float>();
     private List<GameObject> grassGameObjectsToDestroy = new List<GameObject>();
@@ -41,15 +19,11 @@ public class GrassUpdateSystem : ComponentSystem
     protected override void OnUpdate()
     {
 
-        //Loop threw all grass entines
-        for (int i = 0; i < grassData.Length; i++)
+        Entities.WithAll<Transform, Grass>().ForEach((Entity grassEntity, Transform grassTransform) =>
         {
-            //Get grass entity data
-            var grass = grassData.Grass[i];
-            var grassRenderer = grassData.MeshRenderer[i];
-            var grassTransform = grassData.Transform[i];
-            var grassEntity = grassData.Entity[i];
-        
+            var grass = EntityManager.GetSharedComponentData<Grass>(grassEntity);
+            var grassRenderer = grassTransform.GetComponent<MeshRenderer>();
+
             //Keep track of grass intevals by entity ID
             if (!grassIntervals.ContainsKey(grassEntity.Index))
                 grassIntervals.Add(grassEntity.Index, 0);
@@ -57,15 +31,12 @@ public class GrassUpdateSystem : ComponentSystem
             //Get Current Materail property block for grass
             grassRenderer.GetPropertyBlock(materialPropertyBlock);
 
-            //Loop threw all entities with grass Collision
-            for (int j = 0; j < grassCollisionData.Length; j++)
+            Entities.WithAll<Transform, GrassCollision>().ForEach((Entity grassCollisionEntity, Transform grassCollisionTransform) =>
             {
-                //Get Grass Collision entity data
-                var grassCollsion = grassCollisionData.GrassCollision[j];
-                var grassCollisionTransform = grassCollisionData.Transform[j];
+                var grassCollision = EntityManager.GetSharedComponentData<GrassCollision>(grassCollisionEntity);
 
                 //Check if werew colliding with grass based on a distance check
-                if (Vector3.Distance(grassTransform.position, grassCollisionTransform.position) <= grassCollsion.distance)
+                if (Vector3.Distance(grassTransform.position, grassCollisionTransform.position) <= grassCollision.distance)
                 {
                     //Bend Grass
                     var direction = (grassTransform.position - grassCollisionTransform.position).normalized;
@@ -94,10 +65,11 @@ public class GrassUpdateSystem : ComponentSystem
                     if (grassIntervals[grassEntity.Index] <= 0)
                         materialPropertyBlock.SetVector(offsetID, Vector3.Slerp(materialPropertyBlock.GetVector(offsetID), Vector3.zero, grass.bendUpSpeed));
                 }
-            }
 
-            grassRenderer.SetPropertyBlock(materialPropertyBlock);
-        }
+
+                grassRenderer.SetPropertyBlock(materialPropertyBlock);
+            });
+        });
 
         //Destroy Left over  game object outside entity loop
         {

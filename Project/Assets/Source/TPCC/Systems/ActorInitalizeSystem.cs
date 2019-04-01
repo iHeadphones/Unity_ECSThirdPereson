@@ -10,29 +10,24 @@ using UnityEngine;
 
 public class ActorInitalizeSystem : ComponentSystem
 {
-    public struct Data
-    {
-        public readonly int Length;
-        public EntityArray Entity;
-        public ComponentArray<Transform> Transform;
-        [ReadOnly] public SharedComponentDataArray<Actor> Actor;
-        public ExcludeComponent<Frozen> Frozen;
-    }
-
-    [Inject] private Data data;
-
     protected override void OnUpdate()
     {
-            var entity = data.Entity[0];
-            var transform = data.Transform[0];
-            var actor = data.Actor[0];
+        int i = 0;
 
+        Entities.WithAll<Transform, Actor>().WithNone<Frozen>().ForEach((Entity entity, Transform transform) =>
+        {
+            //Only want to do first entity with CaemraTarget
+            if (i > 0)
+                return;
 
-            EntityManager.AddComponentData(entity, new Frozen());
-            EntityManager.AddComponentData(entity, new ActorInput());
-            ActorUtilities.UpdateModel(actor,transform);
+            var actor = EntityManager.GetSharedComponentData<Actor>(entity);
+
+            PostUpdateCommands.AddComponent(entity,new Frozen());
+            PostUpdateCommands.AddComponent(entity,new ActorInput());
+            ActorUtilities.UpdateModel(actor, transform);
             ActorUtilities.UpdateAnimator(actor, transform);
             ActorUtilities.UpdateCollider(actor, transform, 0);
             ActorUtilities.UpdatePhysics(actor, transform);
+        });
     }
 }
