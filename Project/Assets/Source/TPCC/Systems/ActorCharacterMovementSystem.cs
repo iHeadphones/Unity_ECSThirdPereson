@@ -18,7 +18,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
         public ComponentArray<Transform> Transform;
         public ComponentDataArray<ActorInput> ActorInput;
         [ReadOnly] public SharedComponentDataArray<Actor> Actor;
-        [ReadOnly] public SharedComponentDataArray<CharacterMovement> CharacterMovement;
+        [ReadOnly] public SharedComponentDataArray<ActorCharacter> ActorCharacter;
     }
 
     [Inject] private Data data;
@@ -42,7 +42,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             var entity = data.Entity[i];
             var actorInput = data.ActorInput[i];
             var actor = data.Actor[i];
-            var characterMovement = data.CharacterMovement[i];
+            var actorCharacter = data.ActorCharacter[i];
 
             //TO FIX LATER WHEN ECS MATURES
             var animationEventManager = transform.GetComponentInChildren<AnimationEventManager>();
@@ -55,9 +55,9 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
             //Update Movement
             GetMovement(ref actorInput);
-            OnFallMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, characterMovement);
-            OnJumpMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, characterMovement);
-            OnGroundMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, characterMovement);
+            OnFallMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
+            OnJumpMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
+            OnGroundMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
 
             //Write back updated input
             data.ActorInput[i] = actorInput;
@@ -70,7 +70,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             actorInput.movement = Vector3.zero;
     }
 
-    private void OnGroundMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, CharacterMovement characterMovement)
+    private void OnGroundMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         //Return if doing diffrent action | Not Grounded
         if (actorInput.actionIndex != 0 || !isGrounded || isJumpings[entity.Index])
@@ -95,7 +95,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
         {
             //Set Velocity
             var velocity = actorInput.movement;
-            velocity *= actorInput.sprint == 1 ? characterMovement.sprintSpeed : actorInput.crouch == 1 ? characterMovement.crouchSpeed : characterMovement.runSpeed;
+            velocity *= actorInput.sprint == 1 ? actorCharacter.sprintSpeed : actorInput.crouch == 1 ? actorCharacter.crouchSpeed : actorCharacter.runSpeed;
             velocity.y = -1;
             rigidbody.velocity = velocity;
         }
@@ -114,7 +114,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             if (actorInput.movement.magnitude != 0 && actorInput.strafe == 0 || actorInput.movement.magnitude != 0 && actorInput.sprint == 1)
             {
                 var lookRotation = Quaternion.LookRotation(actorInput.movement);
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, dt * characterMovement.rotationSpeed);
+                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, dt * actorCharacter.rotationSpeed);
             }
         }
 
@@ -140,16 +140,16 @@ public class ActorCharacterMovementSystem : ComponentSystem
         }
 
         //Sound
-        if (animationEventManager.RequestEvent("footStep") && characterMovement.footStepAudioEvent != null && actorInput.movement.magnitude != 0)
-            characterMovement.footStepAudioEvent.Play(transform.position);
+        if (animationEventManager.RequestEvent("footStep") && actorCharacter.footStepAudioEvent != null && actorInput.movement.magnitude != 0)
+            actorCharacter.footStepAudioEvent.Play(transform.position);
     }
 
-    private void OnFallMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, CharacterMovement characterMovement)
+    private void OnFallMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         if (!isGrounded)
         {
             var newMovement = rigidbody.velocity;
-            newMovement.y -= characterMovement.fallForce * dt;
+            newMovement.y -= actorCharacter.fallForce * dt;
             rigidbody.velocity = newMovement;
 
             if (actorInput.crouch == 1)
@@ -164,7 +164,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
     }
 
-    private void OnJumpMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, CharacterMovement characterMovement)
+    private void OnJumpMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         //Save Jump Data
         if (!jumpIntervals.ContainsKey(entity.Index))
@@ -185,10 +185,10 @@ public class ActorCharacterMovementSystem : ComponentSystem
             jumpIntervals[entity.Index] = jumpInterval;
 
         //Do Jump
-        if (actorInput.actionIndex == 0 && actorInput.actionToDoIndex == 1 && isGrounded && characterMovement.jumpForce != 0 && isHeadFree && jumpIntervals[entity.Index] <= 0)
+        if (actorInput.actionIndex == 0 && actorInput.actionToDoIndex == 1 && isGrounded && actorCharacter.jumpForce != 0 && isHeadFree && jumpIntervals[entity.Index] <= 0)
         {
             var velocity = rigidbody.velocity;
-            velocity.y = characterMovement.jumpForce;
+            velocity.y = actorCharacter.jumpForce;
             rigidbody.velocity = velocity;
 
             animator.SetTrigger("jump");
@@ -204,12 +204,12 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
         //Sound
         {
-            if (animationEventManager.RequestEvent("jumpGrunt") && characterMovement.jumpGruntAudioEvent != null)
-                characterMovement.jumpGruntAudioEvent.Play(transform.position);
-            else if (animationEventManager.RequestEvent("jumpStart") && characterMovement.jumpStartAudioEvent != null)
-                characterMovement.jumpStartAudioEvent.Play(transform.position);
-            else if (animationEventManager.RequestEvent("jumpLand") && characterMovement.jumpLandAudioEvent != null)
-                characterMovement.jumpLandAudioEvent.Play(transform.position);
+            if (animationEventManager.RequestEvent("jumpGrunt") && actorCharacter.jumpGruntAudioEvent != null)
+                actorCharacter.jumpGruntAudioEvent.Play(transform.position);
+            else if (animationEventManager.RequestEvent("jumpStart") && actorCharacter.jumpStartAudioEvent != null)
+                actorCharacter.jumpStartAudioEvent.Play(transform.position);
+            else if (animationEventManager.RequestEvent("jumpLand") && actorCharacter.jumpLandAudioEvent != null)
+                actorCharacter.jumpLandAudioEvent.Play(transform.position);
         }
     }
 

@@ -5,7 +5,7 @@ using UnityEngine;
 using Unity.Collections;
 
 [Serializable]
-public struct CharacterMovement : ISharedComponentData
+public struct ActorCharacter : ISharedComponentData
 {
 	[Header("Ground")]
 	public AudioEvent footStepAudioEvent;
@@ -25,4 +25,4 @@ public struct CharacterMovement : ISharedComponentData
 	public bool canFly;
 }
 
-public class CharacterMovementComponent : SharedComponentDataProxy<CharacterMovement> { } 
+public class ActorCharacterComponent: SharedComponentDataProxy<ActorCharacter> { } 

@@ -6,7 +6,6 @@ using Unity.Collections;
 [System.Serializable]
 public struct ActorInventory : IComponentData
 {
-    public Entity equipedEntity;
-    
+    public Entity equipedWeaponEntiy;  
 }
 public class ActorInventoryComponent : ComponentDataProxy<ActorInventory> { }

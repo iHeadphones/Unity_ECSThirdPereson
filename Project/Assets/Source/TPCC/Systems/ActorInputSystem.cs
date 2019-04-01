@@ -8,7 +8,6 @@ using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 
 
-[UpdateAfter(typeof(PreUpdate))]
 public class ActorInputSystem : ComponentSystem
 {
     public struct Data
@@ -43,13 +42,13 @@ public class ActorInputSystem : ComponentSystem
 
     private void UpdateAsAI(Entity entity)
     {
-        if (EntityManager.HasComponent(entity, typeof(Player)))
+        if (EntityManager.HasComponent(entity, typeof(ActorPlayer)))
             return;
     }
 
     private void UpdateAsPlayer(Entity entity)
     {
-        if (!EntityManager.HasComponent(entity, typeof(Player)))
+        if (!EntityManager.HasComponent(entity, typeof(ActorPlayer)))
             return;
 
 

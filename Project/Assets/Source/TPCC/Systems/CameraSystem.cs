@@ -4,7 +4,6 @@ using Unity.Entities;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine;
 
-[UpdateAfter(typeof(PreLateUpdate))]
 public class CameraSystem : ComponentSystem
 {
     public struct Data

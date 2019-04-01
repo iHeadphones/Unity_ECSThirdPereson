@@ -24,7 +24,7 @@ public class ActorUtilities
 
         //Set If Player
         if (spawnAsPlayer)
-            entityManager.AddComponentData(entity, new Player());
+            entityManager.AddComponentData(entity, new ActorPlayer());
     }
 
     public static void UpdateModel(Actor actor, Transform transform)
@@ -102,7 +102,8 @@ public class ActorUtilities
 
         rigidbody.constraints = actor.collision.constraints;
     }
-    public static Transform GetSocket(Transform owner, string name)
+
+    public static Transform GetTransform(Transform owner, string name)
     {
         Transform[] children = owner.GetComponentsInChildren<Transform>();
         foreach (var child in children)
@@ -116,15 +117,27 @@ public class ActorUtilities
         return null;
     }
 
-        public static bool IsSocketEmpty(Transform owner, string name)
-        {
-            var a = owner.GetComponentInChildren<Animator>();
+    public static bool IsTransformEmpty(Transform owner, string name)
+    {
+        var a = owner.GetComponentInChildren<Animator>();
 
-            var socket = GetSocket(owner, name);
+        var socket = GetTransform(owner, name);
 
-            if (socket != null)
-                return socket.childCount <= 0;
+        if (socket != null)
+            return socket.childCount <= 0;
 
-            return false;
-        }
+        return false;
     }
+
+    public static Transform GetFirstEmptyTransform(Transform owner, string[] names)
+    {
+        foreach(var i in names)
+        {
+            var t = GetTransform(owner,i);
+            if (t != null && t.childCount <= 0)
+                return t;
+        }
+
+        return null;
+    }
+}
