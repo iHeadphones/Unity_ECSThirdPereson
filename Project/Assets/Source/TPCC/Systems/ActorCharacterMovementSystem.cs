@@ -43,6 +43,8 @@ public class ActorCharacterMovementSystem : ComponentSystem
             OnFallMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnJumpMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnGroundMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
+
+            actorInput.crouchPreviousFrame = actorInput.crouch;
         });
     }
 
