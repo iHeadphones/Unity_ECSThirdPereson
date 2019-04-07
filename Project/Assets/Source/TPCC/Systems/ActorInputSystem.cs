@@ -43,8 +43,9 @@ public class ActorInputSystem : ComponentSystem
 
             //BUTTONS
             if (GInput.GetButtonDown(GButton.BOTTOM)) actorInput.actionToDoIndex = 1;
+            if (GInput.GetButtonDown(GButton.LEFT)) actorInput.actionToDoIndex = 2;
             if (GInput.GetButtonDown(GButton.L3)) actorInput.crouch = (byte)(actorInput.crouch == 1 ? 0 : 1);
-            actorInput.action = (byte)(GInput.GetButtonDown(GButton.LEFT) ? 1 : 0);
+            actorInput.action = (byte)(GInput.GetButtonDown(GButton.RIGHT) ? 1 : 0);
             actorInput.sprint = (byte)(GInput.GetButton(GButton.TOP) ? 1 : 0);
             actorInput.strafe = (byte)(GInput.GetButton(GButton.L2) ? 1 : 0);
         }

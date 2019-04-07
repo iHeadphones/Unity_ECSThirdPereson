@@ -28,6 +28,8 @@ public class CameraSystem : ComponentSystem
             if (i > 0)
                 return;
 
+            i++;
+
             //Get Target Entity from priority
             var dt = Time.deltaTime;
             var cameraTransform = Camera.main.transform;

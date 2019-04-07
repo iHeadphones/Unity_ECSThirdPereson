@@ -63,7 +63,7 @@ public class GInput
         if (name == GInputName.KEYBOARD)
         {   
             if (button == GButton.TOP) return KeyCode.LeftShift;
-			else if (button == GButton.RIGHT) return KeyCode.None;
+			else if (button == GButton.RIGHT) return KeyCode.E;
 			else if (button == GButton.BOTTOM) return KeyCode.Space;
 			else if (button == GButton.LEFT) return KeyCode.Mouse0;
 			else if (button == GButton.L1) return KeyCode.JoystickButton4;

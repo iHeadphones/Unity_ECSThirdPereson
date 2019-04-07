@@ -31,15 +31,15 @@ public class GrassUpdateSystem : ComponentSystem
             //Get Current Materail property block for grass
             grassRenderer.GetPropertyBlock(materialPropertyBlock);
 
-            Entities.WithAll<Transform, GrassCollision>().ForEach((Entity grassCollisionEntity, Transform grassCollisionTransform) =>
+            Entities.WithAll<Transform, GrassEffector>().ForEach((Entity grassEffectorEntity, Transform grassEffectorTransform) =>
             {
-                var grassCollision = EntityManager.GetSharedComponentData<GrassCollision>(grassCollisionEntity);
+                var grassCollision = EntityManager.GetSharedComponentData<GrassEffector>(grassEffectorEntity);
 
                 //Check if werew colliding with grass based on a distance check
-                if (Vector3.Distance(grassTransform.position, grassCollisionTransform.position) <= grassCollision.distance)
+                if (Vector3.Distance(grassTransform.position, grassEffectorTransform.position) <= grassCollision.distance)
                 {
                     //Bend Grass
-                    var direction = (grassTransform.position - grassCollisionTransform.position).normalized;
+                    var direction = (grassTransform.position - grassEffectorTransform.position).normalized;
                     direction *= grass.bendAmount;
                     direction.y = -grass.stampAmount;
                     materialPropertyBlock.SetVector(offsetID, Vector3.Slerp(materialPropertyBlock.GetVector(offsetID), direction, grass.bendDownSpeed));

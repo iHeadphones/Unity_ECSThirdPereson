@@ -12,13 +12,8 @@ public class ActorInitalizeSystem : ComponentSystem
 {
     protected override void OnUpdate()
     {
-        int i = 0;
-
         Entities.WithAll<Transform, Actor>().WithNone<Frozen>().ForEach((Entity entity, Transform transform) =>
         {
-            //Only want to do first entity with CaemraTarget
-            if (i > 0)
-                return;
 
             var actor = EntityManager.GetSharedComponentData<Actor>(entity);
 
