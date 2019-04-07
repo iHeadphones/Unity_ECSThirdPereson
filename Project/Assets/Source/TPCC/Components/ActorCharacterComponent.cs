@@ -23,6 +23,9 @@ public struct ActorCharacter : ISharedComponentData
 
 	[Header("Fly")]
 	public bool canFly;
+
+	[Header("Wall Hugging")]
+	public bool canWallHug;
 }
 
 public class ActorCharacterComponent: SharedComponentDataProxy<ActorCharacter> { } 

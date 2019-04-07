@@ -67,17 +67,27 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
                                 newActorInventory.equippedEntiy = itemEntity;
                                 newActorInventory.isEquipped = 1;
 
-                                inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType",actorItem.itemAnimationIndex);
+                                inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", actorItem.itemAnimationIndex);
 
                                 if (EntityManager.HasComponent<ActorMeleeWeapon>(itemEntity) && !EntityManager.HasComponent<MarkerCanMeleeAttack>(inventoryEntity))
-                                    PostUpdateCommands.AddComponent(inventoryEntity,new MarkerCanMeleeAttack());
+                                    PostUpdateCommands.AddComponent(inventoryEntity, new MarkerCanMeleeAttack());
 
                             }
                         }
                     }
                 });
             }
-
+            
+            if (actorInput.action == 1 && attemptToPickUp == false)
+            {
+                var transform = EntityManager.GetComponentObject<Transform>(actorInventory.equippedEntiy);
+                PostUpdateCommands.RemoveComponent(actorInventory.equippedEntiy, typeof(Parent));
+                transform.GetComponent<Rigidbody>().useGravity = true;
+                transform.GetComponent<Rigidbody>().isKinematic = false;
+                transform.GetComponent<Collider>().enabled = true;
+                transform.SetParent(null, true);
+                newActorInventory.isEquipped = 0;
+            }
             actorInventory = newActorInventory;
         });
     }
