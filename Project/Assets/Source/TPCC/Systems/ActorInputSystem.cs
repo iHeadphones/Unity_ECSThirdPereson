@@ -49,6 +49,8 @@ public class ActorInputSystem : ComponentSystem
             actorInput.sprint = (byte)(GInput.GetButton(GButton.TOP) ? 1 : 0);
             actorInput.strafe = (byte)(GInput.GetButton(GButton.L2) ? 1 : 0);
         }
+        
+        actorInput.rawMovement = actorInput.movement;
 
         //Convert Actor Movement to Camera
         {

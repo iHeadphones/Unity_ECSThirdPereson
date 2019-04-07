@@ -11,6 +11,7 @@ using System.Collections.Generic;
 public class ActorCharacterPickupDropSystem : ComponentSystem
 {
     private ActorInventory newActorInventory;
+    private ActorInput newActorInventoryInput;
     bool attemptToPickUp;
 
     protected override void OnUpdate()
@@ -18,6 +19,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
         Entities.WithAll<Transform, ActorInventory, ActorInput>().ForEach((Entity inventoryEntity, Transform inventoryTransform, ref ActorInventory actorInventory, ref ActorInput actorInput) =>
         {
             newActorInventory = actorInventory;
+            newActorInventoryInput = actorInput;
             attemptToPickUp = false;
 
             if (actorInput.action == 1 && actorInput.actionIndex == 0)
@@ -48,6 +50,8 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
 
                         if (targetSocket != null)
                         {
+                            //reset action
+                            newActorInventoryInput.action = 0;
                             //Add Parent tag to item
                             PostUpdateCommands.AddComponent(itemEntity, new Parent());
 
@@ -66,6 +70,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
                             {
                                 newActorInventory.equippedEntiy = itemEntity;
                                 newActorInventory.isEquipped = 1;
+                                
 
                                 inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", actorItem.itemAnimationIndex);
 
@@ -78,7 +83,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
                 });
             }
             
-            if (actorInput.action == 1 && attemptToPickUp == false)
+            if (actorInput.action == 1 && attemptToPickUp == false && newActorInventory.isEquipped == 1)
             {
                 var transform = EntityManager.GetComponentObject<Transform>(actorInventory.equippedEntiy);
                 PostUpdateCommands.RemoveComponent(actorInventory.equippedEntiy, typeof(Parent));
@@ -87,8 +92,10 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
                 transform.GetComponent<Collider>().enabled = true;
                 transform.SetParent(null, true);
                 newActorInventory.isEquipped = 0;
+                newActorInventoryInput.action = 0;
             }
             actorInventory = newActorInventory;
+            actorInput = newActorInventoryInput;
         });
     }
 }

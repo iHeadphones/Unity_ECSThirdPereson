@@ -7,6 +7,7 @@ using Unity.Mathematics;
 public struct ActorInput : IComponentData
 {
     public Vector3 movement;
+    public Vector3 rawMovement;
     public byte actionIndex;
     public byte continueActionIndex;
     public byte actionToDoIndex;
