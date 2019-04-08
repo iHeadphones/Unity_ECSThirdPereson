@@ -44,19 +44,26 @@ public class ActorCharacterWallHugSystem : ComponentSystem
         if (actorInput.action == 1 && actorInput.crouch == 0 && actorInput.actionIndex == 0)
         {
             // get all surrounding walls  | Get first hit as our main hit   
-            var hits = Physics.SphereCastAll(transform.position, 0.5f, Vector3.one * 0.5f, 0.5f, actorCharacterWallHug.wallHugMask, QueryTriggerInteraction.Ignore);
+            var hits = Physics.SphereCastAll(transform.position, 0.5f, Vector3.one * 0.5f, 0.5f, actorCharacterWallHug.wallHugMask);
 
             if (hits.Length >= 1)
             {
                 var hit = hits[0];
-                var directionToWall = (hit.point - transform.position).normalized;
+                var directionToWall = (hit.transform.position - transform.position).normalized;
+                var distanceToWall = Vector3.Distance(hit.transform.position, transform.position);
                 RaycastHit wallHit;
 
-                if (Physics.Raycast(transform.position + new Vector3(0, 0.2f, 0), directionToWall, out wallHit, 0.51f, actorCharacterWallHug.wallHugMask))
-                    wallHuggingDirections[entity.Index] = new Vector3(0, 90, 0); // GetMeshColliderNormal(wallHit);
+                if (Physics.Raycast(transform.position + new Vector3(0, 0.5f, 0), directionToWall, out wallHit, distanceToWall, actorCharacterWallHug.wallHugMask))
+                {
+                    wallHuggingDirections[entity.Index] =  Quaternion.LookRotation(GetMeshColliderNormal(wallHit)).eulerAngles;
+    
+                    Debug.DrawLine(transform.position + new Vector3(0, 0.5f, 0), wallHit.point, Color.red, 1);
+                    Debug.DrawRay(wallHit.point, GetMeshColliderNormal(wallHit) * 5, Color.red, 1);
 
-                actorInput.action = 0;
-                actorInput.actionIndex = 99;
+                    actorInput.action = 0;
+                    actorInput.actionIndex = 99;
+                }
+
             }
         }
 
@@ -129,15 +136,16 @@ public class ActorCharacterWallHugSystem : ComponentSystem
         Vector3[] normals = mesh.normals;
         int[] triangles = mesh.triangles;
 
+        // Extract local space normals of the triangle we hit
         Vector3 n0 = normals[triangles[hit.triangleIndex * 3 + 0]];
         Vector3 n1 = normals[triangles[hit.triangleIndex * 3 + 1]];
         Vector3 n2 = normals[triangles[hit.triangleIndex * 3 + 2]];
 
+        // interpolate using the barycentric coordinate of the hitpoint | Use barycentric coordinate to interpolate normal
         Vector3 baryCenter = hit.barycentricCoordinate;
         Vector3 interpolatedNormal = n0 * baryCenter.x + n1 * baryCenter.y + n2 * baryCenter.z;
-        interpolatedNormal.Normalize();
-        interpolatedNormal = hit.transform.TransformDirection(interpolatedNormal);
-        return interpolatedNormal;
+        interpolatedNormal = interpolatedNormal.normalized;
 
+        return interpolatedNormal;
     }
 }
