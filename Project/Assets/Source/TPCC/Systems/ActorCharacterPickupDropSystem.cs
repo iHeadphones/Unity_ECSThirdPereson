@@ -11,7 +11,7 @@ using System.Collections.Generic;
 public class ActorCharacterPickupDropSystem : ComponentSystem
 {
     private ActorInventory newActorInventory;
-    private ActorInput newActorInventoryInput;
+    private ActorInput newInventoryActorInput;
     bool attemptToPickUp;
 
     protected override void OnUpdate()
@@ -19,7 +19,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
         Entities.WithAll<Transform, ActorInventory, ActorInput>().ForEach((Entity inventoryEntity, Transform inventoryTransform, ref ActorInventory actorInventory, ref ActorInput actorInput) =>
         {
             newActorInventory = actorInventory;
-            newActorInventoryInput = actorInput;
+            newInventoryActorInput = actorInput;
             attemptToPickUp = false;
 
             if (actorInput.action == 1 && actorInput.actionIndex == 0)
@@ -30,72 +30,33 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
                     var actorItem = EntityManager.GetSharedComponentData<ActorItem>(itemEntity);
 
                     //Check if were in distance and not already picked up
-                    if (Vector3.Distance(inventoryTransform.position, itemTransform.position) <= 1f && !EntityManager.HasComponent(itemEntity, typeof(Parent)))
+                    if (!attemptToPickUp && Vector3.Distance(inventoryTransform.position, itemTransform.position) <= 1f && !EntityManager.HasComponent(itemEntity, typeof(Parent)))
                     {
                         //Set that we attempted to pick a item up
                         attemptToPickUp = true;
 
                         //Get Target Socket
                         var targetSocket = ActorUtilities.GetFirstEmptyTransform(inventoryTransform, actorItem.sockets);
-                        var targetSocketIndex = 0;
 
-                        //Get Index of targt socket
-                        for (int i = 0; i < actorItem.sockets.Length; i++)
-                            if (actorItem.sockets[i] == targetSocket.name)
-                            {
-                                targetSocketIndex = i;
-                                break;
-                            }
-
-
+                        //Do Pickup | Set action to 0
                         if (targetSocket != null)
                         {
-                            //reset action
-                            newActorInventoryInput.action = 0;
-                            //Add Parent tag to item
-                            PostUpdateCommands.AddComponent(itemEntity, new Parent());
-
-                            //Disable Physics | Collision
-                            itemTransform.GetComponent<Rigidbody>().useGravity = false;
-                            itemTransform.GetComponent<Rigidbody>().isKinematic = true;
-                            itemTransform.GetComponent<Collider>().enabled = false;
-
-                            //Set Parent | local position | local euelr angle
-                            itemTransform.parent = targetSocket;
-                            itemTransform.localPosition = actorItem.socketOffsetPositions[targetSocketIndex];
-                            itemTransform.localEulerAngles = actorItem.socketEulerAngles[targetSocketIndex];
-
-                            //Set inventory equped entity | Mark if actor can melee attack ?
-                            if (actorItem.socketIsMain[targetSocketIndex])
-                            {
-                                newActorInventory.equippedEntiy = itemEntity;
-                                newActorInventory.isEquipped = 1;
-                                
-
-                                inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", actorItem.itemAnimationIndex);
-
-                                if (EntityManager.HasComponent<ActorMeleeWeapon>(itemEntity) && !EntityManager.HasComponent<MarkerCanMeleeAttack>(inventoryEntity))
-                                    PostUpdateCommands.AddComponent(inventoryEntity, new MarkerCanMeleeAttack());
-
-                            }
+                            ActorUtilities.PickupItem(PostUpdateCommands, EntityManager, targetSocket, itemTransform, itemEntity, actorItem, inventoryTransform, inventoryEntity, ref newActorInventory);
+                            newInventoryActorInput.action = 0;
                         }
                     }
                 });
             }
-            
-            if (actorInput.action == 1 && attemptToPickUp == false && newActorInventory.isEquipped == 1)
+
+            //Drop | Set Action to 0
+            if (actorInput.action == 1 && actorInput.actionIndex == 0 && attemptToPickUp == false && newActorInventory.isEquipped == 1)
             {
-                var transform = EntityManager.GetComponentObject<Transform>(actorInventory.equippedEntiy);
-                PostUpdateCommands.RemoveComponent(actorInventory.equippedEntiy, typeof(Parent));
-                transform.GetComponent<Rigidbody>().useGravity = true;
-                transform.GetComponent<Rigidbody>().isKinematic = false;
-                transform.GetComponent<Collider>().enabled = true;
-                transform.SetParent(null, true);
-                newActorInventory.isEquipped = 0;
-                newActorInventoryInput.action = 0;
+                ActorUtilities.DropItem(PostUpdateCommands, EntityManager, newActorInventory.equippedEntiy, inventoryTransform, inventoryEntity, ref newActorInventory);
+                newInventoryActorInput.action = 0;
             }
+
             actorInventory = newActorInventory;
-            actorInput = newActorInventoryInput;
+            actorInput = newInventoryActorInput;
         });
     }
 }

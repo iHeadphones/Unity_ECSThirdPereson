@@ -131,13 +131,75 @@ public class ActorUtilities
 
     public static Transform GetFirstEmptyTransform(Transform owner, string[] names)
     {
-        foreach(var i in names)
+        foreach (var i in names)
         {
-            var t = GetTransform(owner,i);
+            var t = GetTransform(owner, i);
             if (t != null && t.childCount <= 0)
                 return t;
         }
 
         return null;
+    }
+
+    public static void PickupItem(EntityCommandBuffer postUpdateCommands, EntityManager entityManager, Transform socket, Transform itemTransform, Entity itemEntity, ActorItem actorItem, Transform inventoryTransform, Entity inventoryEntity, ref ActorInventory inventory)
+    {
+        //Get Index of socket
+        var targetSocketIndex = 0;
+        //Get Index of targt socket
+        for (int i = 0; i < actorItem.sockets.Length; i++)
+            if (actorItem.sockets[i] == socket.name)
+            {
+                targetSocketIndex = i;
+                break;
+            }
+
+
+        //Add Parent tag to item
+        postUpdateCommands.AddComponent(itemEntity, new Parent());
+
+        //Disable Physics | Collision
+        itemTransform.GetComponent<Rigidbody>().useGravity = false;
+        itemTransform.GetComponent<Rigidbody>().isKinematic = true;
+        itemTransform.GetComponent<Collider>().enabled = false;
+
+        //Set Parent | local position | local euelr angle
+        itemTransform.parent = socket;
+        itemTransform.localPosition = actorItem.socketOffsetPositions[targetSocketIndex];
+        itemTransform.localEulerAngles = actorItem.socketEulerAngles[targetSocketIndex];
+
+        //Set inventory equped entity | Mark if actor can melee attack ?
+        if (actorItem.socketIsMain[targetSocketIndex])
+        {
+            inventory.equippedEntiy = itemEntity;
+            inventory.isEquipped = 1;
+
+
+            inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", actorItem.itemAnimationIndex);
+
+            if (entityManager.HasComponent<ActorMeleeWeapon>(itemEntity) && !entityManager.HasComponent<MarkerCanMeleeAttack>(inventoryEntity))
+                postUpdateCommands.AddComponent(inventoryEntity, new MarkerCanMeleeAttack());
+        }
+    }
+
+    public static void DropItem(EntityCommandBuffer postUpdateCommands, EntityManager entityManager, Entity itemEntity, Transform inventoryTransform, Entity inventoryEntity, ref ActorInventory actorInventory)
+    {
+        //Item is no longer parent of a entity
+        postUpdateCommands.RemoveComponent(actorInventory.equippedEntiy, typeof(Parent));
+
+        //Rest transform parent, physics and collision
+        var itemTransform = entityManager.GetComponentObject<Transform>(actorInventory.equippedEntiy);
+        itemTransform.GetComponent<Rigidbody>().useGravity = true;
+        itemTransform.GetComponent<Rigidbody>().isKinematic = false;
+        itemTransform.GetComponent<Collider>().enabled = true;
+        itemTransform.SetParent(null, true);
+
+        //Were dropping main entity
+        if (actorInventory.equippedEntiy == itemEntity)
+        {
+            actorInventory.isEquipped = 0;
+            inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", 0.0f);
+            if (entityManager.HasComponent(inventoryEntity,typeof(MarkerCanMeleeAttack)))
+                postUpdateCommands.RemoveComponent<MarkerCanMeleeAttack>(inventoryEntity);
+        }
     }
 }

@@ -56,6 +56,7 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
             {
                 actorInput.actionIndex = 0;
                 animator.SetTrigger("attackMeleeEnd");
+                animator.SetBool("disableUpperBody",false);
                 
                 if (doComboAttacks[entity.Index])
                 {
@@ -67,9 +68,6 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
                 {
                     animator.SetFloat("attackMeleeCombo", 0);
                 }
-
-
-
             }
         });
 

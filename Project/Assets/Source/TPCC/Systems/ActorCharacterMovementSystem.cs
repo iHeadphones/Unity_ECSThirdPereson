@@ -8,13 +8,11 @@ using Unity.Mathematics;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine;
 
-[UpdateAfter(typeof(ActorCharacterPickupDropSystem))]
+[UpdateBefore(typeof(ActorCharacterPickupDropSystem))]
 public class ActorCharacterMovementSystem : ComponentSystem
 {
     private Dictionary<int, float> jumpIntervals = new Dictionary<int, float>();
     private Dictionary<int, bool> isJumpings = new Dictionary<int, bool>();
-    private Dictionary<int, bool> isHuggingWalls = new Dictionary<int, bool>();
-    private Dictionary<int, Vector3> wallHuggingDirections = new Dictionary<int, Vector3>();
 
     private float dt;
     private float animationTransitionRate = 0.1f;
@@ -44,7 +42,6 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
             //Update Movement
             GetMovement(ref actorInput);
-            OnWallHugMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnFallMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnJumpMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
             OnGroundMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacter);
@@ -64,7 +61,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
     private void OnGroundMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         //Return if doing diffrent action | Not Grounded
-        if (actorInput.actionIndex != 0 || !isGrounded || isJumpings[entity.Index] || isHuggingWalls[entity.Index])
+        if (actorInput.actionIndex != 0 || !isGrounded || isJumpings[entity.Index])
             return;
 
 
@@ -139,9 +136,6 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
     private void OnFallMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
-        if (isHuggingWalls[entity.Index])
-            return;
-
         if (!isGrounded)
         {
             var newMovement = rigidbody.velocity;
@@ -162,9 +156,6 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
     private void OnJumpMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
-        if (isHuggingWalls[entity.Index])
-            return;
-
         //Save Jump Data
         if (!jumpIntervals.ContainsKey(entity.Index))
         {
@@ -211,90 +202,25 @@ public class ActorCharacterMovementSystem : ComponentSystem
                 actorCharacter.jumpLandAudioEvent.Play(transform.position);
         }
     }
-    private void OnWallHugMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
+
+   
+
+    private bool IsGrounded(Actor actor, Transform transform)
     {
-        // checks if Dictionary is null it adds in the default.
-        if (!isHuggingWalls.ContainsKey(entity.Index))
-            isHuggingWalls.Add(entity.Index, false);
-
-
-        // start wall hugging
-        if (actorInput.action == 1 && actorInput.crouch == 0 && isHuggingWalls[entity.Index] == false)
-        {
-
-            // get all surrounding walls  | Get first hit as our main hit   
-            var hits = Physics.SphereCastAll(transform.position, 0.5f, Vector3.one * 0.5f, 0.5f, actorCharacter.wallHugMask, QueryTriggerInteraction.Ignore);
-
-            if (hits.Length >= 1)
-            {
-
-                var hit = hits[0];
-                actorInput.action = 0;
-                isHuggingWalls[entity.Index] = true;
-                var directionToWall = (hit.point - transform.position).normalized;
-                RaycastHit wallHit;
-
-                if (Physics.Raycast(transform.position + new Vector3(0, 0.2f, 0), directionToWall, out wallHit, 0.51f, actorCharacter.wallHugMask))
-                {
-                    Debug.Log(wallHit.transform.name);
-                    wallHuggingDirections[entity.Index] = new Vector3(0, 90, 0); // GetMeshColliderNormal(wallHit);
-                    transform.eulerAngles = wallHuggingDirections[entity.Index];
-                }
-            }
-        }
-
-        //Update Wall hugging
-        if (isHuggingWalls[entity.Index])
-        {
-            //Move
-            {
-                var vX = actorInput.movement.z;
-                var velocity = -transform.right * vX * actorCharacter.runSpeed * deadPoint;
-                rigidbody.velocity = velocity;
-
-                animator.SetFloat("movementX",actorInput.movement.z * deadPoint);
-                animator.SetFloat("movementY",0);
-
-                Debug.Log(velocity);
-            }
-        }
+        var position = transform.position;
+        position.y = transform.GetComponent<Collider>().bounds.min.y + 0.5f;
+        Debug.DrawRay(position, Vector3.down * 0.61f, Color.blue);
+        return Physics.Raycast(position, Vector3.down, 0.61f, actor.collision.groundMask);
     }
 
-        private bool IsGrounded(Actor actor, Transform transform)
-        {
-            var position = transform.position;
-            position.y = transform.GetComponent<Collider>().bounds.min.y + 0.5f;
-            Debug.DrawRay(position, Vector3.down * 0.61f, Color.blue);
-            return Physics.Raycast(position, Vector3.down, 0.61f, actor.collision.groundMask);
-        }
+    private bool IsHeadFree(Actor actor, Transform transform)
+    {
+        var collider = transform.GetComponent<Collider>();
+        var length = collider.bounds.size.y * 0.55f;
+        var position = transform.position;
+        position.y = collider.bounds.max.y;
 
-        private bool IsHeadFree(Actor actor, Transform transform)
-        {
-            var collider = transform.GetComponent<Collider>();
-            var length = collider.bounds.size.y * 0.55f;
-            var position = transform.position;
-            position.y = collider.bounds.max.y;
-
-            Debug.DrawRay(position, Vector3.up * length, Color.blue);
-            return !Physics.Raycast(position, Vector3.up, length, actor.collision.obsticleMask);
-        }
-
-        private Vector3 GetMeshColliderNormal(RaycastHit hit)
-        {
-            MeshCollider collider = (MeshCollider)hit.collider;
-            Mesh mesh = collider.sharedMesh;
-            Vector3[] normals = mesh.normals;
-            int[] triangles = mesh.triangles;
-
-            Vector3 n0 = normals[triangles[hit.triangleIndex * 3 + 0]];
-            Vector3 n1 = normals[triangles[hit.triangleIndex * 3 + 1]];
-            Vector3 n2 = normals[triangles[hit.triangleIndex * 3 + 2]];
-
-            Vector3 baryCenter = hit.barycentricCoordinate;
-            Vector3 interpolatedNormal = n0 * baryCenter.x + n1 * baryCenter.y + n2 * baryCenter.z;
-            interpolatedNormal.Normalize();
-            interpolatedNormal = hit.transform.TransformDirection(interpolatedNormal);
-            return interpolatedNormal;
-
-        }
+        Debug.DrawRay(position, Vector3.up * length, Color.blue);
+        return !Physics.Raycast(position, Vector3.up, length, actor.collision.obsticleMask);
     }
+}
