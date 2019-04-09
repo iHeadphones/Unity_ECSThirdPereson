@@ -21,20 +21,20 @@ public class ActorCharacterWallHugSystem : ComponentSystem
     {
         dt = Time.deltaTime;
 
-        Entities.WithAll<Transform, Actor, ActorInput, ActorCharacterWallHug>().ForEach((Entity entity, Transform transform, ref ActorInput actorInput) =>
-        {
+        Entities.WithAll<Transform, Actor, ActorInput, ActorCharacter, ActorCharacterWallHug>().ForEach((Entity entity, Transform transform, ref ActorInput actorInput) =>
+         {
             // Data
             var actor = EntityManager.GetSharedComponentData<Actor>(entity);
-            var actorCharacterWallHug = EntityManager.GetSharedComponentData<ActorCharacterWallHug>(entity);
+             var actorCharacterWallHug = EntityManager.GetSharedComponentData<ActorCharacterWallHug>(entity);
 
             //MonoBehaviours
             var animationEventManager = transform.GetComponentInChildren<AnimationEventManager>();
-            var animator = transform.GetComponentInChildren<Animator>();
-            var rigidbody = transform.GetComponent<Rigidbody>();
+             var animator = transform.GetComponentInChildren<Animator>();
+             var rigidbody = transform.GetComponent<Rigidbody>();
 
             //Update Movement
             OnWallHugMovement(transform, animationEventManager, animator, rigidbody, entity, actor, ref actorInput, actorCharacterWallHug);
-        });
+         });
     }
 
     private void OnWallHugMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacterWallHug actorCharacterWallHug)
@@ -54,8 +54,8 @@ public class ActorCharacterWallHugSystem : ComponentSystem
 
                 if (Physics.Raycast(transform.position + new Vector3(0, 0.5f, 0), directionToWall, out wallHit, distanceToWall, actorCharacterWallHug.wallHugMask))
                 {
-                    wallHuggingDirections[entity.Index] =  Quaternion.LookRotation(GetMeshColliderNormal(wallHit)).eulerAngles;
-    
+                    wallHuggingDirections[entity.Index] = Quaternion.LookRotation(GetMeshColliderNormal(wallHit)).eulerAngles;
+
                     Debug.DrawLine(transform.position + new Vector3(0, 0.5f, 0), wallHit.point, Color.red, 1);
                     Debug.DrawRay(wallHit.point, GetMeshColliderNormal(wallHit) * 5, Color.red, 1);
 

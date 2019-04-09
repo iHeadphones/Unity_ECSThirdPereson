@@ -125,7 +125,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             animator.SetBool("crouch", actorInput.crouch == 1 && actorInput.sprint == 0);
             animator.SetFloat("movementX", actorInput.movement.x, animationTransitionRate, dt);
             animator.SetFloat("movementY", actorInput.movement.z, animationTransitionRate, dt);
-            animator.SetFloat("movementAmount", actorInput.movement.magnitude);
+            animator.SetFloat("movementAmount", actorInput.movement.magnitude, animationTransitionRate, dt);
         }
 
         //Sound
@@ -135,7 +135,8 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
     private void OnFallMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
-        animator.SetBool("inAirPrevious",animator.GetBool("inAir"));
+        //set Animators in air previoius
+        animator.SetBool("inAirPrevious", animator.GetBool("inAir"));
 
         if (!isGrounded)
         {
