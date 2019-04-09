@@ -10,7 +10,10 @@ using System.Collections.Generic;
 
 public class ActorCharacterMeleeAttackSystem : ComponentSystem
 {
-    private Dictionary<int, bool> doComboAttacks = new Dictionary<int, bool>();
+    private Dictionary<int, bool> doNextAttacks = new Dictionary<int, bool>();
+    private Dictionary<int, bool> isPlayingAttackAnimations = new Dictionary<int, bool>();
+
+    private byte actionIndex = 2;
 
     protected override void OnUpdate()
     {
@@ -22,29 +25,30 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
             var actorMeleeWeapon = EntityManager.GetSharedComponentData<ActorMeleeWeapon>(actorInventory.equippedEntiy);
 
             //Make sure combo attacks are not null 
-            if (!doComboAttacks.ContainsKey(entity.Index))
-                doComboAttacks.Add(entity.Index, false);
+            if (!doNextAttacks.ContainsKey(entity.Index))
+            {
+                doNextAttacks.Add(entity.Index, false);
+                isPlayingAttackAnimations.Add(entity.Index, false);
+            }
 
             //Start Attack
-            if (actorInput.actionToDoIndex == 2 && actorInput.actionIndex == 0 || actorInput.actionIndex == 0 && doComboAttacks[entity.Index] == true)
+            if (actorInput.actionToDoIndex == actionIndex && actorInput.actionIndex == 0)
             {
-                actorInput.actionIndex = 2;
                 rigidbody.velocity = Vector3.zero;
                 animator.SetTrigger("attackMeleeStart");
                 animator.SetBool("disableUpperBody", true);
+                animator.SetBool("inAirDisabled",true);
                 animator.SetFloat("movementX", 0);
                 animator.SetFloat("movementY", 0);
-                doComboAttacks[entity.Index] = false;
                 actorInput.actionToDoIndex = 0;
+                actorInput.actionIndex = actionIndex;
             }
 
             //Update Attacking
-            if (actorInput.actionIndex == 2)
+            if (animator.GetCurrentAnimatorStateInfo(0).IsTag("attackMelee"))
             {
+                isPlayingAttackAnimations[entity.Index] = true;
                 animator.transform.localPosition = Vector3.zero;
-
-                if (actorInput.actionToDoIndex == 2)
-                    doComboAttacks[entity.Index] = true;
 
                 //Sound
                 if (animationEventManager.RequestEvent("swing") && actorMeleeWeapon.swingAudioEvent != null)
@@ -52,27 +56,28 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
             }
 
             //Done Attacking
-            if (actorInput.actionIndex == 2 && animationEventManager.RequestEvent("attackEnd"))
+            if (animationEventManager.RequestEvent("attackEnd") || !animator.GetCurrentAnimatorStateInfo(0).IsTag("attackMelee") && isPlayingAttackAnimations[entity.Index])
             {
+                animator.SetBool("disableUpperBody", false);
+                animator.SetFloat("attackMeleeCombo", 0);
+                animator.SetBool("inAirDisabled",false);
+                animationEventManager.RemoveEvent("attackNext");
+                isPlayingAttackAnimations[entity.Index] = false;
                 actorInput.actionIndex = 0;
-                animator.SetTrigger("attackMeleeEnd");
-                animator.SetBool("disableUpperBody",false);
-                
-                if (doComboAttacks[entity.Index])
-                {
-                    animator.SetFloat("attackMeleeCombo", animator.GetFloat("attackMeleeCombo") + 1);
-                    if (animator.GetFloat("attackMeleeCombo") > 1)
-                        animator.SetFloat("attackMeleeCombo", 0);
-                }
-                else
-                {
-                    animator.SetFloat("attackMeleeCombo", 0);
-                }
+                actorInput.actionToDoIndex = 0;
+            }
+
+            //Set to move to next attack
+            if (actorInput.actionIndex == actionIndex && actorInput.actionToDoIndex == actionIndex && !doNextAttacks[entity.Index])
+                doNextAttacks[entity.Index] = true;
+
+            //Do next attack
+            if (animationEventManager.RequestEvent("attackNext") && doNextAttacks[entity.Index])
+            {
+                animator.SetFloat("attackMeleeCombo", animator.GetFloat("attackMeleeCombo") + 1);
+                animator.SetTrigger("attackMeleeStart");
+                doNextAttacks[entity.Index] = false;
             }
         });
-
-        //If were attacking set do combo attack to true on entity
-        //When done attacking check if entity combo attac is true than start attack over
-
     }
 }

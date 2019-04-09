@@ -12,7 +12,6 @@ using UnityEngine;
 public class ActorCharacterMovementSystem : ComponentSystem
 {
     private Dictionary<int, float> jumpIntervals = new Dictionary<int, float>();
-    private Dictionary<int, bool> isJumpings = new Dictionary<int, bool>();
 
     private float dt;
     private float animationTransitionRate = 0.1f;
@@ -37,8 +36,8 @@ public class ActorCharacterMovementSystem : ComponentSystem
             var rigidbody = transform.GetComponent<Rigidbody>();
 
             //Get Grounded state | Head State
-            isGrounded = IsGrounded(actor, transform);
-            isHeadFree = IsHeadFree(actor, transform);
+            isGrounded = ActorUtilities.IsGrounded(actor, transform);
+            isHeadFree = ActorUtilities.IsHeadFree(actor, transform);
 
             //Update Movement
             GetMovement(ref actorInput);
@@ -61,7 +60,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
     private void OnGroundMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         //Return if doing diffrent action | Not Grounded
-        if (actorInput.actionIndex != 0 || !isGrounded || isJumpings[entity.Index])
+        if (actorInput.actionIndex != 0 || !isGrounded || actorInput.isJumping == 1)
             return;
 
 
@@ -136,6 +135,8 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
     private void OnFallMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
+        animator.SetBool("inAirPrevious",animator.GetBool("inAir"));
+
         if (!isGrounded)
         {
             var newMovement = rigidbody.velocity;
@@ -158,16 +159,13 @@ public class ActorCharacterMovementSystem : ComponentSystem
     {
         //Save Jump Data
         if (!jumpIntervals.ContainsKey(entity.Index))
-        {
             jumpIntervals.Add(entity.Index, jumpInterval);
-            isJumpings.Add(entity.Index, false);
-        }
 
         //Decrease jump interval if goruned
         if (isGrounded && rigidbody.velocity.y <= 0)
         {
             jumpIntervals[entity.Index] -= 1 * dt;
-            isJumpings[entity.Index] = false;
+            actorInput.isJumping = 0;
         }
 
         //If were not grounded reset jump interval
@@ -183,7 +181,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
 
             animator.SetTrigger("jump");
 
-            isJumpings[entity.Index] = true;
+            actorInput.isJumping = 1;
 
             if (actorInput.crouch == 1)
                 ActorUtilities.UpdateCollider(actor, transform, "standing");
@@ -201,26 +199,5 @@ public class ActorCharacterMovementSystem : ComponentSystem
             else if (animationEventManager.RequestEvent("jumpLand") && actorCharacter.jumpLandAudioEvent != null)
                 actorCharacter.jumpLandAudioEvent.Play(transform.position);
         }
-    }
-
-   
-
-    private bool IsGrounded(Actor actor, Transform transform)
-    {
-        var position = transform.position;
-        position.y = transform.GetComponent<Collider>().bounds.min.y + 0.5f;
-        Debug.DrawRay(position, Vector3.down * 0.61f, Color.blue);
-        return Physics.Raycast(position, Vector3.down, 0.61f, actor.collision.groundMask);
-    }
-
-    private bool IsHeadFree(Actor actor, Transform transform)
-    {
-        var collider = transform.GetComponent<Collider>();
-        var length = collider.bounds.size.y * 0.55f;
-        var position = transform.position;
-        position.y = collider.bounds.max.y;
-
-        Debug.DrawRay(position, Vector3.up * length, Color.blue);
-        return !Physics.Raycast(position, Vector3.up, length, actor.collision.obsticleMask);
     }
 }

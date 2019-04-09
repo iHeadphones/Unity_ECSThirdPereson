@@ -20,6 +20,7 @@ public struct ActorInput : IComponentData
     public byte applyRootMotion;
 
     public byte crouchPreviousFrame;
+    public byte isJumping;
     
     //Action Indexs 
     // 0 : nothing

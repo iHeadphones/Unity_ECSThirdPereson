@@ -202,4 +202,22 @@ public class ActorUtilities
                 postUpdateCommands.RemoveComponent<MarkerCanMeleeAttack>(inventoryEntity);
         }
     }
+
+    public static bool IsGrounded(Actor actor, Transform transform)
+    {
+        var position = transform.position;
+        position.y = transform.GetComponent<Collider>().bounds.min.y + 0.5f;
+        Debug.DrawRay(position, Vector3.down * 0.61f, Color.blue);
+        return Physics.Raycast(position, Vector3.down, 0.61f, actor.collision.groundMask);
+    }
+
+    public static bool IsHeadFree(Actor actor, Transform transform)
+    {
+        var collider = transform.GetComponent<Collider>();
+        var length = actor.collision.collisionBounds[0].size.y + 0.25f;
+        var position = transform.position;
+
+        Debug.DrawRay(position, Vector3.up * length, Color.blue);
+        return !Physics.Raycast(position, Vector3.up, length, actor.collision.obsticleMask);
+    }
 }

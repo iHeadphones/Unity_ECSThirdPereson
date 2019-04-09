@@ -15,7 +15,6 @@ public class ActorCharacterWallHugSystem : ComponentSystem
 
     private float dt;
     private float animationTransitionRate = 0.1f;
-    private float jumpInterval = 0.3f;
     private float deadPoint = 0.25f;
 
     protected override void OnUpdate()
