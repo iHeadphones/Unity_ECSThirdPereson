@@ -8,18 +8,18 @@ using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 using System.Collections.Generic;
 
-public class SpawnPointSystem : ComponentSystem
+public class ActorSpawnPointSystem : ComponentSystem
 {
 
-    private List<SpawnPoint> spawnPontsToUse = new List<SpawnPoint>();
+    private List<ActorSpawnPoint> spawnPontsToUse = new List<ActorSpawnPoint>();
     private List<float3> spawnPontsToUsePositions = new List<float3>();
 
     protected override void OnUpdate()
     {
         //Que spawns
-        Entities.WithAll<Transform, SpawnPoint>().WithNone<Frozen>().ForEach((Entity entity, Transform transform) =>
+        Entities.WithAll<Transform, ActorSpawnPoint>().WithNone<Frozen>().ForEach((Entity entity, Transform transform) =>
         {
-            var spawnPoint = EntityManager.GetSharedComponentData<SpawnPoint>(entity);
+            var spawnPoint = EntityManager.GetSharedComponentData<ActorSpawnPoint>(entity);
             PostUpdateCommands.AddComponent(entity, new Frozen());
             spawnPontsToUse.Add(spawnPoint);
             spawnPontsToUsePositions.Add(transform.position);

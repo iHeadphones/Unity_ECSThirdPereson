@@ -22,7 +22,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
             newInventoryActorInput = actorInput;
             attemptToPickUp = false;
 
-            if (actorInput.action == 1 && actorInput.actionIndex == 0)
+            if (actorInput.actionToDo == 1 && actorInput.action == 0)
             {
                 Entities.WithAll<Transform, ActorItem>().ForEach((Entity itemEntity, Transform itemTransform) =>
                 {
@@ -49,7 +49,7 @@ public class ActorCharacterPickupDropSystem : ComponentSystem
             }
 
             //Drop | Set Action to 0
-            if (actorInput.action == 1 && actorInput.actionIndex == 0 && attemptToPickUp == false && newActorInventory.isEquipped == 1)
+            if (actorInput.actionToDo == 1 && actorInput.action == 0 && attemptToPickUp == false && newActorInventory.isEquipped == 1)
             {
                 ActorUtilities.DropItem(PostUpdateCommands, EntityManager, newActorInventory.equippedEntiy, inventoryTransform, inventoryEntity, ref newActorInventory);
                 newInventoryActorInput.action = 0;

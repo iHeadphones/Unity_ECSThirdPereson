@@ -13,11 +13,11 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
     private Dictionary<int, bool> doNextAttacks = new Dictionary<int, bool>();
     private Dictionary<int, bool> isPlayingAttackAnimations = new Dictionary<int, bool>();
 
-    private byte actionIndex = 2;
+    private byte actionIndex = 3;
 
     protected override void OnUpdate()
     {
-        Entities.WithAll<Transform, ActorInventory, ActorInput>().ForEach((Entity entity, Transform transform, ref ActorInventory actorInventory, ref MarkerCanMeleeAttack markerCanMeleeAttack, ref ActorInput actorInput) =>
+        Entities.WithAll<Transform, ActorInventory, ActorInput, ActorTagCanMeleeAttack>().ForEach((Entity entity, Transform transform, ref ActorInventory actorInventory, ref ActorInput actorInput) =>
         {
             var rigidbody = transform.GetComponentInChildren<Rigidbody>();
             var animationEventManager = transform.GetComponentInChildren<AnimationEventManager>();
@@ -32,7 +32,7 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
             }
 
             //Start Attack
-            if (actorInput.actionToDoIndex == actionIndex && actorInput.actionIndex == 0)
+            if (actorInput.actionToDo == actionIndex && actorInput.action == 0)
             {
                 rigidbody.velocity = Vector3.zero;
                 animator.SetTrigger("attackMeleeStart");
@@ -40,8 +40,8 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
                 animator.SetBool("inAirDisabled",true);
                 animator.SetFloat("movementX", 0);
                 animator.SetFloat("movementY", 0);
-                actorInput.actionToDoIndex = 0;
-                actorInput.actionIndex = actionIndex;
+                actorInput.actionToDo = 0;
+                actorInput.action = actionIndex;
             }
 
             //Update Attacking
@@ -63,12 +63,12 @@ public class ActorCharacterMeleeAttackSystem : ComponentSystem
                 animator.SetBool("inAirDisabled",false);
                 animationEventManager.RemoveEvent("attackNext");
                 isPlayingAttackAnimations[entity.Index] = false;
-                actorInput.actionIndex = 0;
-                actorInput.actionToDoIndex = 0;
+                actorInput.action = 0;
+                actorInput.actionToDo = 0;
             }
 
             //Set to move to next attack
-            if (actorInput.actionIndex == actionIndex && actorInput.actionToDoIndex == actionIndex && !doNextAttacks[entity.Index])
+            if (actorInput.action == actionIndex && actorInput.actionToDo == actionIndex && !doNextAttacks[entity.Index])
                 doNextAttacks[entity.Index] = true;
 
             //Do next attack

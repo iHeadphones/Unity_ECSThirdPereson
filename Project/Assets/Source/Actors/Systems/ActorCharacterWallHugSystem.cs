@@ -40,7 +40,7 @@ public class ActorCharacterWallHugSystem : ComponentSystem
     private void OnWallHugMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacterWallHug actorCharacterWallHug)
     {
         // start wall hugging
-        if (actorInput.action == 1 && actorInput.crouch == 0 && actorInput.actionIndex == 0)
+        if (actorInput.actionToDo == 1 && actorInput.crouch == 0 && actorInput.action == 0)
         {
             // get all surrounding walls  | Get first hit as our main hit   
             var hits = Physics.SphereCastAll(transform.position, 0.5f, Vector3.one * 0.5f, 0.5f, actorCharacterWallHug.wallHugMask);
@@ -59,22 +59,22 @@ public class ActorCharacterWallHugSystem : ComponentSystem
                     Debug.DrawLine(transform.position + new Vector3(0, 0.5f, 0), wallHit.point, Color.red, 1);
                     Debug.DrawRay(wallHit.point, GetMeshColliderNormal(wallHit) * 5, Color.red, 1);
 
-                    actorInput.action = 0;
-                    actorInput.actionIndex = 99;
+                    actorInput.actionToDo = 0;
+                    actorInput.action = 99;
                 }
 
             }
         }
 
         //Stop wall hugging
-        if (actorInput.action == 1 && actorInput.actionIndex == 99)
+        if (actorInput.actionToDo == 1 && actorInput.action == 99)
         {
+            actorInput.actionToDo = 0;
             actorInput.action = 0;
-            actorInput.actionIndex = 0;
         }
 
         //Update Wall hugging
-        if (actorInput.actionIndex == 99)
+        if (actorInput.action == 99)
         {
             bool forceStop = false;
 
@@ -89,7 +89,6 @@ public class ActorCharacterWallHugSystem : ComponentSystem
                 //Check if there is wall ahead of where we are going if not than force a stop
                 {
                     //Do it
-                    RaycastHit hit;
                     var raycastPoint = transform.position;
                     raycastPoint += Vector3.up * 0.1f;
                     raycastPoint += (transform.right * movementToRightDotProduct).normalized * 0.5f;

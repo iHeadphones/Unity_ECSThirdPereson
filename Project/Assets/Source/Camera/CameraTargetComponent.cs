@@ -13,24 +13,21 @@ public struct CameraTarget : ISharedComponentData
 [Serializable]
 public struct CameraTargetData
 {
-    [Header("Main")]
-    public CameraType cameraType;
-    public byte priority;
-    public bool doCollision;
-
     [Header("Distance")]
     public float defaultDistance;
-	public float minDistance;
-	public float maxDistance;
+    public float minDistance;
+    public float maxDistance;
 
-    [Header("Speeds")]
-    public float zoomSpeed;
+    [Header("Camera Lag")]
     public float cameraLag;
 
     [Header("Rotation")]
     public float rotationSpeed;
     public float minRotatonY;
     public float maxRotationY;
+
+    [Header("Collision")]
+    public bool doCollision;
 }
 
-public class CameraTargetComponent : SharedComponentDataProxy<CameraTarget> { } 
+public class CameraTargetComponent : SharedComponentDataProxy<CameraTarget> { }

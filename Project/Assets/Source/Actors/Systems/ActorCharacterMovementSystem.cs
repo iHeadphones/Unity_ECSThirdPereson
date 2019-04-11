@@ -60,7 +60,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
     private void OnGroundMovement(Transform transform, AnimationEventManager animationEventManager, Animator animator, Rigidbody rigidbody, Entity entity, Actor actor, ref ActorInput actorInput, ActorCharacter actorCharacter)
     {
         //Return if doing diffrent action | Not Grounded
-        if (actorInput.actionIndex != 0 || !isGrounded || actorInput.isJumping == 1)
+        if (actorInput.action != 0 || !isGrounded || actorInput.isJumping == 1)
             return;
 
 
@@ -121,7 +121,6 @@ public class ActorCharacterMovementSystem : ComponentSystem
             else actorInput.movement = new float3(0, 0, Mathf.Abs(actorInput.movement.magnitude));
 
             //Set Animator Properties
-            actorInput.applyRootMotion = 0;
             animator.SetBool("crouch", actorInput.crouch == 1 && actorInput.sprint == 0);
             animator.SetFloat("movementX", actorInput.movement.x, animationTransitionRate, dt);
             animator.SetFloat("movementY", actorInput.movement.z, animationTransitionRate, dt);
@@ -174,7 +173,7 @@ public class ActorCharacterMovementSystem : ComponentSystem
             jumpIntervals[entity.Index] = jumpInterval;
 
         //Do Jump
-        if (actorInput.actionIndex == 0 && actorInput.actionToDoIndex == 1 && isGrounded && actorCharacter.jumpForce != 0 && isHeadFree && jumpIntervals[entity.Index] <= 0)
+        if (actorInput.action == 0 && actorInput.actionToDo == 2 && isGrounded && actorCharacter.jumpForce != 0 && isHeadFree && jumpIntervals[entity.Index] <= 0)
         {
             var velocity = rigidbody.velocity;
             velocity.y = actorCharacter.jumpForce;

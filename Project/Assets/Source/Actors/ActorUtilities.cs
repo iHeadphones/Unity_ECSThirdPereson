@@ -176,8 +176,8 @@ public class ActorUtilities
 
             inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", actorItem.itemAnimationIndex);
 
-            if (entityManager.HasComponent<ActorMeleeWeapon>(itemEntity) && !entityManager.HasComponent<MarkerCanMeleeAttack>(inventoryEntity))
-                postUpdateCommands.AddComponent(inventoryEntity, new MarkerCanMeleeAttack());
+            if (entityManager.HasComponent<ActorMeleeWeapon>(itemEntity) && !entityManager.HasComponent<ActorTagCanMeleeAttack>(inventoryEntity))
+                postUpdateCommands.AddComponent(inventoryEntity, new ActorTagCanMeleeAttack());
         }
     }
 
@@ -198,8 +198,8 @@ public class ActorUtilities
         {
             actorInventory.isEquipped = 0;
             inventoryTransform.GetComponentInChildren<Animator>().SetFloat("itemType", 0.0f);
-            if (entityManager.HasComponent(inventoryEntity,typeof(MarkerCanMeleeAttack)))
-                postUpdateCommands.RemoveComponent<MarkerCanMeleeAttack>(inventoryEntity);
+            if (entityManager.HasComponent(inventoryEntity,typeof(ActorTagCanMeleeAttack)))
+                postUpdateCommands.RemoveComponent<ActorTagCanMeleeAttack>(inventoryEntity);
         }
     }
 

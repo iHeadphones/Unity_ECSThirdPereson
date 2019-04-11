@@ -120,9 +120,7 @@ public class GInput
 	private static float RemapAxis(GAxis axis, bool down)
 	{
 		var name = GetControllerName();
-
-		string stick = "joystick 1 axis 0";
-
+		
 		if (name == GInputName.NONE)
 			return 0;
 		

@@ -9,10 +9,10 @@ using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine;
 
 [System.Serializable]
-public struct SpawnPoint : ISharedComponentData
+public struct ActorSpawnPoint : ISharedComponentData
 {
     public bool spawnAsPlayer;
     public GameObject sourceGameObject;
 }
 
-public class SpawnPointComponent : SharedComponentDataProxy<SpawnPoint> { } 
+public class ActorSpawnPointComponent : SharedComponentDataProxy<ActorSpawnPoint> { } 
